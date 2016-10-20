@@ -7,6 +7,7 @@ package hw1_104403521;
  */
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Line2D;
 import javax.swing.*;
 import java.util.*;
 
@@ -18,21 +19,20 @@ public class paintFrame extends JFrame {
 
     JPanel buttonList = new JPanel();
     JLabel stateLabel = new JLabel("游標位置：畫布外");
-    JPanel paintField = new JPanel(){
+    JPanel paintField = new JPanel() {
         @Override
-       public void paintComponent(Graphics g)
-       {
-          super.paintComponent(g); // clears drawing area
-          Graphics2D g2d = (Graphics2D) g;
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g); // clears drawing area
+            Graphics2D g2d = (Graphics2D) g;
 
-          // draw all 
-          for (paintObject point : points)
-          {
-              System.out.println(point.x);
-              g.fillOval(point.x, point.y, point.size,point.size);
-          }        
-          
-       } 
+            // draw all 
+            for (paintObject point : points) {
+                g2d.setStroke(new BasicStroke(point.size));
+                g2d.setColor(point.c);
+                g2d.draw(point.s);
+            }
+
+        }
     };
     private final JCheckBox fillJCheckBox;
     private final JRadioButton smallJRadioButton;
@@ -43,12 +43,14 @@ public class paintFrame extends JFrame {
     private final JButton cleraJButton;
     private String[] toolList
             = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形"};
-    
-    private final ArrayList<paintObject> points = new ArrayList<>();
-    private final int[] painterSize = {10,20,30};
-    int painterSizeSelecter = 0,size,set=0;
 
-    public paintFrame() {        
+    private final ArrayList<paintObject> points = new ArrayList<>();
+    private final int[] painterSize = {4, 8, 12};
+    private int painterSizeSelecter = 0, set = 0;
+    private Color tmpBrushColor = Color.black;
+    
+
+    public paintFrame() {
         //設定基本資料
         this.setTitle("小畫家");
         this.setSize(800, 800);
@@ -105,8 +107,8 @@ public class paintFrame extends JFrame {
             public void itemStateChanged(ItemEvent event) {
                 // determine whether item selected
                 if (event.getStateChange() == ItemEvent.SELECTED) {
-                    JOptionPane.showMessageDialog(null, "你選擇了" + toolJComboBox.getSelectedItem(), "訊息", JOptionPane.PLAIN_MESSAGE);
-                      set = toolJComboBox.getSelectedIndex();
+//                    JOptionPane.showMessageDialog(null, "你選擇了" + toolJComboBox.getSelectedItem(), "訊息", JOptionPane.PLAIN_MESSAGE);
+                    set = toolJComboBox.getSelectedIndex();
                 }
             }
         }
@@ -173,10 +175,24 @@ public class paintFrame extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent event) {
-            JOptionPane.showMessageDialog(null, "你選擇了 " + event.getActionCommand(), "訊息", JOptionPane.PLAIN_MESSAGE);
+//            JOptionPane.showMessageDialog(null, "你選擇了 " + event.getActionCommand(), "訊息", JOptionPane.PLAIN_MESSAGE);
+            if (event.getSource() == cleraJButton) {
+                points.clear();
+                repaint();
+            }
+            if(event.getSource() == FGJButton){
+                tmpBrushColor = JColorChooser.showDialog(paintFrame.this, "顏色選擇器", tmpBrushColor);
+                if(tmpBrushColor == null){
+                    tmpBrushColor = Color.black;
+                }
+                FGJButton.setBackground(tmpBrushColor);
+            }
+            if(event.getSource() == BGJButton){
+                
+            }
         }
     }
-
+    int x1,x2,y1,y2;//抓取滑鼠點
     //抽象方法須全部實作
     private class MouseHandler implements MouseListener,
             MouseMotionListener {
@@ -191,9 +207,10 @@ public class paintFrame extends JFrame {
             stateLabel.setText("游標位置：畫布外");
 
         }
+
         @Override
         public void mouseReleased(MouseEvent e) {
-            
+
         }
 
         @Override
@@ -202,14 +219,24 @@ public class paintFrame extends JFrame {
 
         @Override
         public void mousePressed(MouseEvent e) {
+            x1 = e.getX();
+            y1 = e.getY();
         }
-        
-        
+
         @Override
         public void mouseDragged(MouseEvent e) {
-            paintObject tmppoint = new paintObject(e.getX(),e.getY(),painterSize[painterSizeSelecter]);                      
-            points.add(tmppoint);
-            
+            x2 = e.getX();
+            y2 = e.getY();
+            switch (set) {
+                case 0:       
+                    Shape line = new Line2D.Double(x1,y1,x2,y2);
+                    paintObject tmppoint = new paintObject(line, painterSize[painterSizeSelecter],tmpBrushColor);
+                    points.add(tmppoint);
+                    x1 = x2;
+                    y1 = y2;
+                    break;
+            }
+
             repaint();
         }
 
@@ -218,7 +245,7 @@ public class paintFrame extends JFrame {
             stateLabel.setText(String.format("游標位置：(%d, %d)",
                     e.getX(), e.getY()));
         }
-        
+
     }
 
 }

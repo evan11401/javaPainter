@@ -5,8 +5,8 @@
  */
 package hw1_104403521;
 
-import java.awt.Point;
-import java.util.ArrayList;
+import java.awt.Color;
+import java.awt.Shape;
 
 /**
  *
@@ -14,10 +14,12 @@ import java.util.ArrayList;
  */
 public class paintObject{
     int x,y,size;
-    public paintObject(int x,int y,int size){
-            this.x = x;
-            this.y = y;
+    Shape s;
+    Color c;
+    public paintObject(Shape s,int size,Color c){
+            this.s = s;            
             this.size = size;
+            this.c = c;
     }
   
     
