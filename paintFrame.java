@@ -23,10 +23,15 @@ public class paintFrame extends JFrame {
        public void paintComponent(Graphics g)
        {
           super.paintComponent(g); // clears drawing area
+          Graphics2D g2d = (Graphics2D) g;
 
           // draw all 
-          for (Point point : points)
-             g.fillOval(point.x, point.y, 10, 10);
+          for (paintObject point : points)
+          {
+              System.out.println(point.x);
+              g.fillOval(point.x, point.y, point.size,point.size);
+          }        
+          
        } 
     };
     private final JCheckBox fillJCheckBox;
@@ -39,10 +44,11 @@ public class paintFrame extends JFrame {
     private String[] toolList
             = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形"};
     
-    private final ArrayList<Point> points = new ArrayList<>(); 
+    private final ArrayList<paintObject> points = new ArrayList<>();
+    private final int[] painterSize = {10,20,30};
+    int painterSizeSelecter = 0,size,set=0;
 
-
-    public paintFrame() {
+    public paintFrame() {        
         //設定基本資料
         this.setTitle("小畫家");
         this.setSize(800, 800);
@@ -100,6 +106,7 @@ public class paintFrame extends JFrame {
                 // determine whether item selected
                 if (event.getStateChange() == ItemEvent.SELECTED) {
                     JOptionPane.showMessageDialog(null, "你選擇了" + toolJComboBox.getSelectedItem(), "訊息", JOptionPane.PLAIN_MESSAGE);
+                      set = toolJComboBox.getSelectedIndex();
                 }
             }
         }
@@ -136,11 +143,14 @@ public class paintFrame extends JFrame {
         public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 if (e.getSource() == smallJRadioButton) {
-                    JOptionPane.showMessageDialog(null, "你選擇了 小", "訊息", JOptionPane.PLAIN_MESSAGE);
+//                    JOptionPane.showMessageDialog(null, "你選擇了 小", "訊息", JOptionPane.PLAIN_MESSAGE);
+                    painterSizeSelecter = 0;
                 } else if (e.getSource() == midJRadioButton) {
-                    JOptionPane.showMessageDialog(null, "你選擇了 中", "訊息", JOptionPane.PLAIN_MESSAGE);
+//                    JOptionPane.showMessageDialog(null, "你選擇了 中", "訊息", JOptionPane.PLAIN_MESSAGE);
+                    painterSizeSelecter = 1;
                 } else if (e.getSource() == largeJRadioButton) {
-                    JOptionPane.showMessageDialog(null, "你選擇了 大", "訊息", JOptionPane.PLAIN_MESSAGE);
+//                    JOptionPane.showMessageDialog(null, "你選擇了 大", "訊息", JOptionPane.PLAIN_MESSAGE);
+                    painterSizeSelecter = 2;
                 }
             }
         }
@@ -183,6 +193,7 @@ public class paintFrame extends JFrame {
         }
         @Override
         public void mouseReleased(MouseEvent e) {
+            
         }
 
         @Override
@@ -192,12 +203,14 @@ public class paintFrame extends JFrame {
         @Override
         public void mousePressed(MouseEvent e) {
         }
-
+        
+        
         @Override
         public void mouseDragged(MouseEvent e) {
-            System.out.println(e.getX()+","+e.getY());
-            points.add(e.getPoint());
-               repaint();
+            paintObject tmppoint = new paintObject(e.getX(),e.getY(),painterSize[painterSizeSelecter]);                      
+            points.add(tmppoint);
+            
+            repaint();
         }
 
         @Override
