@@ -11,12 +11,18 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import javax.swing.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 
 /**
  *
- * @author 蔡承延
+ * 姓名: 蔡承延 學號: 104403521 系級: 資管2A
  */
 public class paintFrame extends JFrame {
 
@@ -26,29 +32,26 @@ public class paintFrame extends JFrame {
         @Override
         public void paintComponent(Graphics g) {
             super.paintComponent(g); // clears drawing area
-            Graphics2D g2d = (Graphics2D) g;  
-            
-               
+            Graphics2D g2d = (Graphics2D) g;
+
             // draw all 
             for (paintObject point : points) {
-                g2d.setStroke(point.size);                
+                g2d.setStroke(point.size);
                 g2d.setColor(point.c);
-                if(point.isFill){
+                if (point.isFill) {
                     g2d.fill(point.s);
-                }else{
+                } else {
                     g2d.draw(point.s);
                 }
-                
-            }         
-             g2d.setStroke(displayPoints.size);
-                g2d.setColor(displayPoints.c);
-                if(displayPoints.isFill){
-                    g2d.fill(displayPoints.s);
-                }else{
-                    g2d.draw(displayPoints.s);
-                }
-            
-               
+
+            }
+            g2d.setStroke(displayPoints.size);
+            g2d.setColor(displayPoints.c);
+            if (displayPoints.isFill) {
+                g2d.fill(displayPoints.s);
+            } else {
+                g2d.draw(displayPoints.s);
+            }
 
         }
     };
@@ -60,18 +63,21 @@ public class paintFrame extends JFrame {
     private final JButton BGJButton;
     private final JButton cleraJButton;
     private final JButton BackButton;
+    private final JButton SaveButton;
     private String[] toolList
-            = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形","橡皮擦"};
-    Shape nu = new Line2D.Double(0,0,0,0);
-    private final ArrayList<paintObject> points = new ArrayList<>();
+            = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形", "橡皮擦"};
+    Shape nu = new Line2D.Double(0, 0, 0, 0);
+    private final ArrayList<paintObject> points = new ArrayList<>();//設定ArrayList型態為自訂物件paintObject
     private paintObject displayPoints;
     private final int[] painterSize = {4, 8, 12};
     private int painterSizeSelecter = 0, set = 0;
     private Color tmpBrushColor = Color.black;
     private Color tmpBackColor;
+    JFileChooser save;
 
     public paintFrame() {
-        this.displayPoints = new paintObject(nu,new BasicStroke(0),tmpBrushColor);
+        this.save = new JFileChooser();
+        this.displayPoints = new paintObject(nu, new BasicStroke(0), tmpBrushColor);
         //設定基本資料
         this.setTitle("小畫家");
         this.setSize(800, 800);
@@ -80,7 +86,7 @@ public class paintFrame extends JFrame {
         this.setResizable(true);
 
         //設定Layouts
-        buttonList.setLayout(new GridLayout(11, 1));
+        buttonList.setLayout(new GridLayout(12, 1));
         add(stateLabel, BorderLayout.SOUTH);
         add(buttonList, BorderLayout.WEST);
         add(paintField, BorderLayout.CENTER);
@@ -118,10 +124,12 @@ public class paintFrame extends JFrame {
         tmpBackColor = Color.white;
         cleraJButton = new JButton("清除畫面");
         BackButton = new JButton("上一步");
+        SaveButton = new JButton("存檔");
         buttonList.add(FGJButton);
         buttonList.add(BGJButton);
         buttonList.add(cleraJButton);
         buttonList.add(BackButton);
+        buttonList.add(SaveButton);
 
         //combobox的監聽器
         toolJComboBox.addItemListener(
@@ -157,6 +165,8 @@ public class paintFrame extends JFrame {
         BGJButton.addActionListener(btnhandler);
         cleraJButton.addActionListener(btnhandler);
         BackButton.addActionListener(btnhandler);
+        SaveButton.addActionListener(btnhandler);
+
         //滑鼠事件的監聽器
         MouseHandler moshandler = new MouseHandler();
         paintField.addMouseListener(moshandler);
@@ -184,14 +194,15 @@ public class paintFrame extends JFrame {
         }
     }
     private boolean isFill = false;
+
     private class CheckBoxHandler implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent event) {
             if (fillJCheckBox.isSelected()) {
-               isFill = true;
+                isFill = true;
             } else {
-               isFill = false;
+                isFill = false;
             }
         }
     }
@@ -204,7 +215,7 @@ public class paintFrame extends JFrame {
 //            JOptionPane.showMessageDialog(null, "你選擇了 " + event.getActionCommand(), "訊息", JOptionPane.PLAIN_MESSAGE);
             if (event.getSource() == cleraJButton) {
                 points.clear();
-                displayPoints = new paintObject(nu,new BasicStroke(0),tmpBrushColor);
+                displayPoints = new paintObject(nu, new BasicStroke(0), tmpBrushColor);
                 tmpBrushColor = Color.black;
                 FGJButton.setBackground(tmpBrushColor);
                 tmpBackColor = Color.white;
@@ -212,27 +223,41 @@ public class paintFrame extends JFrame {
                 BGJButton.setBackground(tmpBackColor);
                 repaint();
             }
-            if(event.getSource() == FGJButton){
+            if (event.getSource() == FGJButton) {
                 tmpBrushColor = JColorChooser.showDialog(paintFrame.this, "顏色選擇器", tmpBrushColor);
-                if(tmpBrushColor == null){
+                if (tmpBrushColor == null) {
                     tmpBrushColor = Color.black;
                 }
                 FGJButton.setBackground(tmpBrushColor);
             }
-            if(event.getSource() == BGJButton){
+            if (event.getSource() == BGJButton) {
                 tmpBackColor = JColorChooser.showDialog(paintFrame.this, "顏色選擇器", tmpBackColor);
                 paintField.setBackground(tmpBackColor);
                 BGJButton.setBackground(tmpBackColor);
             }
-            if(event.getSource()==BackButton){
-                points.remove(points.remove(points.size()-1));                
+            if (event.getSource() == BackButton) {
+                points.remove(points.remove(points.size() - 1));
                 repaint();
+            }
+            if (event.getSource() == SaveButton) {
+                save.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                BufferedImage saveImg = new BufferedImage(paintField.getWidth(), paintField.getHeight(), BufferedImage.TYPE_INT_RGB);
+                paintField.paint(saveImg.createGraphics());
+                int result = save.showDialog(SaveButton, "確認");
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        System.out.println(save.getSelectedFile().getAbsolutePath());
+                        ImageIO.write(saveImg, "jpg", new File(save.getSelectedFile().getAbsolutePath() + "\\masterpiece.jpg"));
+                    } catch (IOException ex) {
+                        Logger.getLogger(paintFrame.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
             }
         }
     }
-    int x1,x2,y1,y2;//抓取滑鼠點
+    int x1, x2, y1, y2;//抓取滑鼠點
     final float dash1[] = {20};//虛線間距            
-            
+
     //抽象方法須全部實作    
     private class MouseHandler implements MouseListener,
             MouseMotionListener {
@@ -250,47 +275,46 @@ public class paintFrame extends JFrame {
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            
-            switch (set)
-            {
+
+            switch (set) {
                 case 1:
                     x2 = e.getX();
                     y2 = e.getY();
-                    Shape line2 = new Line2D.Double(x1,y1,x2,y2);
-                    if(isFill){
-                        paintObject strline = new paintObject(line2, new BasicStroke(painterSize[painterSizeSelecter]) ,tmpBrushColor);
+                    Shape line2 = new Line2D.Double(x1, y1, x2, y2);
+                    if (isFill) {
+                        paintObject strline = new paintObject(line2, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor);
                         points.add(strline);
-                    }else{
+                    } else {
                         final BasicStroke dashed = new BasicStroke(painterSize[painterSizeSelecter],
-                        BasicStroke.CAP_BUTT,
-                        BasicStroke.JOIN_MITER,
-                        10.0f, dash1, 0.0f);
-                        paintObject strline = new paintObject(line2, dashed ,tmpBrushColor);
+                                BasicStroke.CAP_BUTT,
+                                BasicStroke.JOIN_MITER,
+                                10.0f, dash1, 0.0f);
+                        paintObject strline = new paintObject(line2, dashed, tmpBrushColor);
                         points.add(strline);
                     }
-                    
+
                     break;
                 case 2:
-                    Ellipse2D c = new Ellipse2D.Double(Math.min(x1,x2), Math.min(y1, y2), Math.abs(x2 - x1),Math.abs(y2 - y1));
-                    paintObject circle = new paintObject(c,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
+                    Ellipse2D c = new Ellipse2D.Double(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    paintObject circle = new paintObject(c, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     points.add(circle);
                     break;
                 case 3:
                     Rectangle2D r = new Rectangle2D.Double(Math.min(x1,
-		              x2), Math.min(y1, y2), Math.abs(x2 - x1),
-		              Math.abs(y2 - y1));
-                    paintObject rectangle = new paintObject(r,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
+                            x2), Math.min(y1, y2), Math.abs(x2 - x1),
+                            Math.abs(y2 - y1));
+                    paintObject rectangle = new paintObject(r, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     points.add(rectangle);
                     break;
                 case 4:
                     RoundRectangle2D rr = new RoundRectangle2D.Double(Math.min(x1,
-                              x2), Math.min(y1, y2), Math.abs(x2 - x1),
-                              Math.abs(y2 - y1),30,30);
-                    paintObject RoundRectangle = new paintObject(rr,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
+                            x2), Math.min(y1, y2), Math.abs(x2 - x1),
+                            Math.abs(y2 - y1), 30, 30);
+                    paintObject RoundRectangle = new paintObject(rr, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     points.add(RoundRectangle);
                     break;
             }
-            displayPoints = new paintObject(nu,new BasicStroke(0),tmpBrushColor);
+            displayPoints = new paintObject(nu, new BasicStroke(0), tmpBrushColor);
             repaint();
         }
 
@@ -299,12 +323,12 @@ public class paintFrame extends JFrame {
             x2 = e.getX();
             y2 = e.getY();
             switch (set) {
-                case 0:       
-                    Shape line = new Line2D.Double(x1,y1,x2,y2);
-                    paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor);
-                    points.add(tmppoint);                        
+                case 0:
+                    Shape line = new Line2D.Double(x1, y1, x2, y2);
+                    paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor);
+                    points.add(tmppoint);
                     x1 = x2;
-                    y1 = y2;                         
+                    y1 = y2;
                     break;
             }
         }
@@ -320,59 +344,57 @@ public class paintFrame extends JFrame {
             x2 = e.getX();
             y2 = e.getY();
             switch (set) {
-                case 0:       
-                    Shape line = new Line2D.Double(x1,y1,x2,y2);
-                    paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor);
+                case 0:
+                    Shape line = new Line2D.Double(x1, y1, x2, y2);
+                    paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor);
                     points.add(tmppoint);
                     x1 = x2;
-                    y1 = y2;             
+                    y1 = y2;
                     break;
-                case 1:                    
-                    Shape line2 = new Line2D.Double(x1,y1,x2,y2);
-                    if(isFill){
-                        paintObject strline = new paintObject(line2, new BasicStroke(painterSize[painterSizeSelecter]) ,tmpBrushColor);                       
+                case 1:
+                    Shape line2 = new Line2D.Double(x1, y1, x2, y2);
+                    if (isFill) {
+                        paintObject strline = new paintObject(line2, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor);
                         displayPoints = strline;
-                    }else{
+                    } else {
                         final BasicStroke dashed = new BasicStroke(painterSize[painterSizeSelecter],
-                        BasicStroke.CAP_BUTT,
-                        BasicStroke.JOIN_MITER,
-                        10.0f, dash1, 0.0f);
-                        paintObject strline = new paintObject(line2, dashed ,tmpBrushColor);                        
+                                BasicStroke.CAP_BUTT,
+                                BasicStroke.JOIN_MITER,
+                                10.0f, dash1, 0.0f);
+                        paintObject strline = new paintObject(line2, dashed, tmpBrushColor);
                         displayPoints = strline;
-                    }                                                                         
+                    }
                     break;
                 case 2:
-                    Ellipse2D c = new Ellipse2D.Double(Math.min(x1,x2), Math.min(y1, y2), Math.abs(x2 - x1),Math.abs(y2 - y1));
-                    paintObject circle = new paintObject(c,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
+                    Ellipse2D c = new Ellipse2D.Double(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+                    paintObject circle = new paintObject(c, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     displayPoints = circle;
                     break;
                 case 3:
                     Rectangle2D r = new Rectangle2D.Double(Math.min(x1,
-                              x2), Math.min(y1, y2), Math.abs(x2 - x1),
-                              Math.abs(y2 - y1));
-                    paintObject rectangle = new paintObject(r,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
+                            x2), Math.min(y1, y2), Math.abs(x2 - x1),
+                            Math.abs(y2 - y1));
+                    paintObject rectangle = new paintObject(r, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     displayPoints = rectangle;
                     break;
                 case 4:
                     RoundRectangle2D rr = new RoundRectangle2D.Double(Math.min(x1,
-                              x2), Math.min(y1, y2), Math.abs(x2 - x1),
-                              Math.abs(y2 - y1),30,30);
-                    paintObject RoundRectangle = new paintObject(rr,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
+                            x2), Math.min(y1, y2), Math.abs(x2 - x1),
+                            Math.abs(y2 - y1), 30, 30);
+                    paintObject RoundRectangle = new paintObject(rr, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     displayPoints = RoundRectangle;
                     break;
-                 case 5:       
-                    Shape es = new Line2D.Double(x1,y1,x2,y2);
-                    paintObject easer = new paintObject(es, new BasicStroke(painterSize[painterSizeSelecter]),tmpBackColor);
+                case 5:
+                    Shape es = new Line2D.Double(x1, y1, x2, y2);
+                    paintObject easer = new paintObject(es, new BasicStroke(painterSize[painterSizeSelecter]), tmpBackColor);
                     points.add(easer);
                     x1 = x2;
-                    y1 = y2;                    
+                    y1 = y2;
                     break;
-                    
-                
-            }
-            repaint();          
 
-            
+            }
+            repaint();
+
         }
 
         @Override
