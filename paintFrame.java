@@ -26,8 +26,9 @@ public class paintFrame extends JFrame {
         @Override
         public void paintComponent(Graphics g) {
             super.paintComponent(g); // clears drawing area
-            Graphics2D g2d = (Graphics2D) g;            
-
+            Graphics2D g2d = (Graphics2D) g;  
+            
+               
             // draw all 
             for (paintObject point : points) {
                 g2d.setStroke(point.size);                
@@ -38,9 +39,8 @@ public class paintFrame extends JFrame {
                     g2d.draw(point.s);
                 }
                 
-            }            
-//                g2d.setStroke(new BasicStroke(displayPoints.size));
-                g2d.setStroke(displayPoints.size);
+            }         
+             g2d.setStroke(displayPoints.size);
                 g2d.setColor(displayPoints.c);
                 if(displayPoints.isFill){
                     g2d.fill(displayPoints.s);
@@ -48,6 +48,7 @@ public class paintFrame extends JFrame {
                     g2d.draw(displayPoints.s);
                 }
             
+               
 
         }
     };
@@ -58,8 +59,9 @@ public class paintFrame extends JFrame {
     private final JButton FGJButton;
     private final JButton BGJButton;
     private final JButton cleraJButton;
+    private final JButton BackButton;
     private String[] toolList
-            = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形"};
+            = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形","橡皮擦"};
     Shape nu = new Line2D.Double(0,0,0,0);
     private final ArrayList<paintObject> points = new ArrayList<>();
     private paintObject displayPoints;
@@ -67,7 +69,6 @@ public class paintFrame extends JFrame {
     private int painterSizeSelecter = 0, set = 0;
     private Color tmpBrushColor = Color.black;
     private Color tmpBackColor;
-    
 
     public paintFrame() {
         this.displayPoints = new paintObject(nu,new BasicStroke(0),tmpBrushColor);
@@ -79,7 +80,7 @@ public class paintFrame extends JFrame {
         this.setResizable(true);
 
         //設定Layouts
-        buttonList.setLayout(new GridLayout(10, 1));
+        buttonList.setLayout(new GridLayout(11, 1));
         add(stateLabel, BorderLayout.SOUTH);
         add(buttonList, BorderLayout.WEST);
         add(paintField, BorderLayout.CENTER);
@@ -114,10 +115,13 @@ public class paintFrame extends JFrame {
         BGJButton = new JButton("背景色");
         FGJButton.setBackground(Color.black);
         BGJButton.setBackground(Color.white);
+        tmpBackColor = Color.white;
         cleraJButton = new JButton("清除畫面");
+        BackButton = new JButton("上一步");
         buttonList.add(FGJButton);
         buttonList.add(BGJButton);
         buttonList.add(cleraJButton);
+        buttonList.add(BackButton);
 
         //combobox的監聽器
         toolJComboBox.addItemListener(
@@ -152,6 +156,7 @@ public class paintFrame extends JFrame {
         FGJButton.addActionListener(btnhandler);
         BGJButton.addActionListener(btnhandler);
         cleraJButton.addActionListener(btnhandler);
+        BackButton.addActionListener(btnhandler);
         //滑鼠事件的監聽器
         MouseHandler moshandler = new MouseHandler();
         paintField.addMouseListener(moshandler);
@@ -219,6 +224,10 @@ public class paintFrame extends JFrame {
                 paintField.setBackground(tmpBackColor);
                 BGJButton.setBackground(tmpBackColor);
             }
+            if(event.getSource()==BackButton){
+                points.remove(points.remove(points.size()-1));                
+                repaint();
+            }
         }
     }
     int x1,x2,y1,y2;//抓取滑鼠點
@@ -258,7 +267,7 @@ public class paintFrame extends JFrame {
                         10.0f, dash1, 0.0f);
                         paintObject strline = new paintObject(line2, dashed ,tmpBrushColor);
                         points.add(strline);
-                    }                    
+                    }
                     
                     break;
                 case 2:
@@ -281,11 +290,23 @@ public class paintFrame extends JFrame {
                     points.add(RoundRectangle);
                     break;
             }
+            displayPoints = new paintObject(nu,new BasicStroke(0),tmpBrushColor);
             repaint();
         }
 
         @Override
         public void mouseClicked(MouseEvent e) {
+            x2 = e.getX();
+            y2 = e.getY();
+            switch (set) {
+                case 0:       
+                    Shape line = new Line2D.Double(x1,y1,x2,y2);
+                    paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor);
+                    points.add(tmppoint);                        
+                    x1 = x2;
+                    y1 = y2;                         
+                    break;
+            }
         }
 
         @Override
@@ -304,7 +325,7 @@ public class paintFrame extends JFrame {
                     paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor);
                     points.add(tmppoint);
                     x1 = x2;
-                    y1 = y2;                    
+                    y1 = y2;             
                     break;
                 case 1:                    
                     Shape line2 = new Line2D.Double(x1,y1,x2,y2);
@@ -338,6 +359,13 @@ public class paintFrame extends JFrame {
                               Math.abs(y2 - y1),30,30);
                     paintObject RoundRectangle = new paintObject(rr,new BasicStroke(painterSize[painterSizeSelecter]),tmpBrushColor,isFill);
                     displayPoints = RoundRectangle;
+                    break;
+                 case 5:       
+                    Shape es = new Line2D.Double(x1,y1,x2,y2);
+                    paintObject easer = new paintObject(es, new BasicStroke(painterSize[painterSizeSelecter]),tmpBackColor);
+                    points.add(easer);
+                    x1 = x2;
+                    y1 = y2;                    
                     break;
                     
                 
