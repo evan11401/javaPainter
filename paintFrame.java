@@ -1,4 +1,4 @@
-package hw1_104403521;
+package hw2_104403521;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -31,10 +31,10 @@ public class paintFrame extends JFrame {
     JPanel paintField = new JPanel() {
         @Override
         public void paintComponent(Graphics g) {
-            super.paintComponent(g); // clears drawing area
+            super.paintComponent(g);
             Graphics2D g2d = (Graphics2D) g;
 
-            // draw all 
+            // 畫出紀錄的圖形
             for (paintObject point : points) {
                 g2d.setStroke(point.size);
                 g2d.setColor(point.c);
@@ -45,12 +45,19 @@ public class paintFrame extends JFrame {
                 }
 
             }
+//          預覽的圖形
             g2d.setStroke(displayPoints.size);
             g2d.setColor(displayPoints.c);
             if (displayPoints.isFill) {
                 g2d.fill(displayPoints.s);
             } else {
                 g2d.draw(displayPoints.s);
+            }
+//          畫出橡皮擦
+            for(paintObject easer : easers){
+                g2d.setStroke(easer.size);
+                g2d.setColor(tmpBackColor);
+                g2d.draw(easer.s);
             }
 
         }
@@ -68,7 +75,8 @@ public class paintFrame extends JFrame {
             = {"筆刷", "直線", "橢圓形", "矩形", "圓角矩形", "橡皮擦"};
     Shape nu = new Line2D.Double(0, 0, 0, 0);
     private final ArrayList<paintObject> points = new ArrayList<>();//設定ArrayList型態為自訂物件paintObject
-    private paintObject displayPoints;
+    private final ArrayList<paintObject> easers = new ArrayList<>();
+    private paintObject displayPoints;//為暫時的圖案 用來預覽圖形
     private final int[] painterSize = {4, 8, 12};
     private int painterSizeSelecter = 0, set = 0;
     private Color tmpBrushColor = Color.black;
@@ -213,6 +221,7 @@ public class paintFrame extends JFrame {
         @Override
         public void actionPerformed(ActionEvent event) {
 //            JOptionPane.showMessageDialog(null, "你選擇了 " + event.getActionCommand(), "訊息", JOptionPane.PLAIN_MESSAGE);
+            //清除畫面 背景改為white 前景改為black
             if (event.getSource() == cleraJButton) {
                 points.clear();
                 displayPoints = new paintObject(nu, new BasicStroke(0), tmpBrushColor);
@@ -223,6 +232,7 @@ public class paintFrame extends JFrame {
                 BGJButton.setBackground(tmpBackColor);
                 repaint();
             }
+//           呼叫JColorChooser
             if (event.getSource() == FGJButton) {
                 tmpBrushColor = JColorChooser.showDialog(paintFrame.this, "顏色選擇器", tmpBrushColor);
                 if (tmpBrushColor == null) {
@@ -234,11 +244,14 @@ public class paintFrame extends JFrame {
                 tmpBackColor = JColorChooser.showDialog(paintFrame.this, "顏色選擇器", tmpBackColor);
                 paintField.setBackground(tmpBackColor);
                 BGJButton.setBackground(tmpBackColor);
+                repaint();
             }
+//            上一步功能 直接移除ArrayList最後一項
             if (event.getSource() == BackButton) {
                 points.remove(points.remove(points.size() - 1));
                 repaint();
             }
+//            存檔功能 用JFileChooser選擇資料夾 並用ImageIO把JPanel存成masterpiece.jpg
             if (event.getSource() == SaveButton) {
                 save.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 BufferedImage saveImg = new BufferedImage(paintField.getWidth(), paintField.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -256,7 +269,7 @@ public class paintFrame extends JFrame {
         }
     }
     int x1, x2, y1, y2;//抓取滑鼠點
-    final float dash1[] = {20};//虛線間距            
+    final float dash1[] = {10};//虛線間距          
 
     //抽象方法須全部實作    
     private class MouseHandler implements MouseListener,
@@ -274,10 +287,10 @@ public class paintFrame extends JFrame {
         }
 
         @Override
+//        用此方法來記錄 直線 隨圓形 矩形 圓角矩形
         public void mouseReleased(MouseEvent e) {
-
             switch (set) {
-                case 1:
+                case 1://直線
                     x2 = e.getX();
                     y2 = e.getY();
                     Shape line2 = new Line2D.Double(x1, y1, x2, y2);
@@ -294,19 +307,19 @@ public class paintFrame extends JFrame {
                     }
 
                     break;
-                case 2:
+                case 2://隨圓形
                     Ellipse2D c = new Ellipse2D.Double(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
                     paintObject circle = new paintObject(c, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     points.add(circle);
                     break;
-                case 3:
+                case 3://矩形
                     Rectangle2D r = new Rectangle2D.Double(Math.min(x1,
                             x2), Math.min(y1, y2), Math.abs(x2 - x1),
                             Math.abs(y2 - y1));
                     paintObject rectangle = new paintObject(r, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor, isFill);
                     points.add(rectangle);
                     break;
-                case 4:
+                case 4://圓角矩形
                     RoundRectangle2D rr = new RoundRectangle2D.Double(Math.min(x1,
                             x2), Math.min(y1, y2), Math.abs(x2 - x1),
                             Math.abs(y2 - y1), 30, 30);
@@ -323,7 +336,7 @@ public class paintFrame extends JFrame {
             x2 = e.getX();
             y2 = e.getY();
             switch (set) {
-                case 0:
+                case 0://畫點                    
                     Shape line = new Line2D.Double(x1, y1, x2, y2);
                     paintObject tmppoint = new paintObject(line, new BasicStroke(painterSize[painterSizeSelecter]), tmpBrushColor);
                     points.add(tmppoint);
@@ -340,6 +353,7 @@ public class paintFrame extends JFrame {
         }
 
         @Override
+//      用此方法來記錄筆跡 其他為預覽圖案之用途 在拉動時會有圖案出來
         public void mouseDragged(MouseEvent e) {
             x2 = e.getX();
             y2 = e.getY();
@@ -386,8 +400,8 @@ public class paintFrame extends JFrame {
                     break;
                 case 5:
                     Shape es = new Line2D.Double(x1, y1, x2, y2);
-                    paintObject easer = new paintObject(es, new BasicStroke(painterSize[painterSizeSelecter]), tmpBackColor);
-                    points.add(easer);
+                    paintObject easer = new paintObject(es, new BasicStroke(painterSize[painterSizeSelecter]));
+                    easers.add(easer);
                     x1 = x2;
                     y1 = y2;
                     break;

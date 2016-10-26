@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package hw1_104403521;
+package hw2_104403521;
 
 /**
  *
