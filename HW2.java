@@ -9,7 +9,7 @@ package hw2_104403521;
  *
  * @author 蔡承延
  */
-public class HW1 {
+public class HW2 {
 
     /**
      * @param args the command line arguments
